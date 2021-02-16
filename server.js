@@ -1,32 +1,52 @@
 const express = require('express')
 const dotenv = require('dotenv')
+const morgan = require('morgan')
+const colors = require('colors')
+const connectDB = require('./config/db')
+const errorHandler = require('./middleware/error')
+const cookieParser = require('cookie-parser')
 
 //Load ENV vars
 dotenv.config({ path: './config/config.env' })
 
+// Route Files
+const users = require('./routes/userRoutes')
+const songs = require('./routes/songRoutes')
+const auth = require('./routes/auth')
+
+// Connect to Database
+connectDB()
+
 const app = express();
 
-// User Routes
-app.get('/api/v1/users', (req, res) => {
-  res.status(200).json({success: true, msg: 'return all users'})
-})
+// Body Parser
+app.use(express.json())
 
-app.post('/api/v1/users', (req, res) => {
-  res.status(200).json({success: true, msg: 'add new users'})
-})
+// Cookie parser
+app.use(cookieParser())
 
-app.get('/api/v1/users/:id', (req, res) => {
-  res.status(200).json({success: true, msg: `return user ${req.params.id}`})
-})
 
-app.put('/api/v1/users/:id', (req, res) => {
-  res.status(200).json({success: true, msg: `update user ${req.params.id}`})
-})
+// Dev logging middleware
+if (process.env.NODE_ENV === 'development') {
+  app.use(morgan('dev'))
+}
 
-app.delete('/api/v1/users/:id', (req, res) => {
-  res.status(200).json({success: true, msg: `delete user ${req.params.id}`})
-})
+
+// Mount Routers
+app.use('/api/v1/users', users)
+app.use('/api/v1/songs', songs)
+app.use('/api/v1/auth', auth)
+
+app.use(errorHandler)
+
 
 const PORT = process.env.PORT || 5000
 
-app.listen(PORT, console.log(`Server running in ${process.env.NODE_ENV} mode on port ${PORT}`))
+const server = app.listen(PORT, console.log(`Server running in ${process.env.NODE_ENV} mode on port ${PORT}`.yellow))
+
+// Handle unhandled promise rejections
+process.on('unhandledRejection', (err, promise) => {
+  console.log(`Error: ${err.message}`.red)
+  // Close server & exit process
+  server.close(() => process.exit(1))
+})
