@@ -9,10 +9,13 @@ const cookieParser = require('cookie-parser')
 //Load ENV vars
 dotenv.config({ path: './config/config.env' })
 
+const url = process.env.BASE_URL
+
 // Route Files
-const users = require('./routes/userRoutes')
 const songs = require('./routes/songRoutes')
 const auth = require('./routes/auth')
+const gigs = require('./routes/gigRoutes')
+const players = require('./routes/playerRoutes')
 
 // Connect to Database
 connectDB()
@@ -33,9 +36,10 @@ if (process.env.NODE_ENV === 'development') {
 
 
 // Mount Routers
-app.use('/api/v1/users', users)
-app.use('/api/v1/songs', songs)
-app.use('/api/v1/auth', auth)
+app.use(`${url}/songs`, songs)
+app.use(`${url}/auth`, auth)
+app.use(`${url}/gigs`, gigs)
+app.use(`${url}/players`, players)
 
 app.use(errorHandler)
 
